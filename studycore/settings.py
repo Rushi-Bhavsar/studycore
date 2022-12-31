@@ -38,7 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'attendance_report.apps.AttendanceReportConfig',
+    'google_services.apps.GoogleServicesConfig',
+    'aws_integration.apps.AwsIntegrationConfig',
+    'gcp_integration.apps.GcpIntegrationConfig',
+    'slack_integration.apps.SlackIntegrationConfig'
 ]
 
 MIDDLEWARE = [
