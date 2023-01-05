@@ -94,3 +94,96 @@ def attach_policy():
     return response
 
 
+def detach_policy():
+    """
+    Section 2: Number 18
+    :return:
+    """
+    username = 'testuser2'
+    policy_arn = 'arn:aws:iam::880291223494:policy/UserCustomPolicy'
+    iam = boto3.client('iam')
+    response = iam.detach_user_policy(UserName=username, PolicyArn=policy_arn)
+    return response
+
+
+def create_group():
+    """
+    Section 2: Number 19
+    :return:
+    """
+    group_name = 'RDSAdmins'
+    iam = boto3.client('iam')
+    response = iam.create_group(GroupName=group_name)
+    return response
+
+
+def attach_policy_to_group():
+    """
+    Section 2: Number 20
+    :return:
+    """
+    group_name = 'RDSAdmins'
+    policy_arn = 'arn:aws:iam::aws:policy/AmazonRDSDataFullAccess'
+    iam = boto3.client('iam')
+    response = iam.attach_group_policy(GroupName=group_name, PolicyArn=policy_arn)
+    return response
+
+
+def add_user_group():
+    """
+    Section 2: Number 21
+    :return:
+    """
+    username = 'testuser2'
+    group_name = 'RDSAdmins'
+    iam = boto3.client('iam')
+    response = iam.add_user_to_group(UserName=username, GroupName=group_name)
+    return response
+
+
+def detach_policy_from_group():
+    """
+    Section 2: Number 22
+    :return:
+    """
+    group_name = 'RDSAdmins'
+    policy_arn = 'arn:aws:iam::aws:policy/AmazonRDSDataFullAccess'
+    iam = boto3.client('iam')
+    response = iam.detach_group_policy(GroupName=group_name, PolicyArn=policy_arn)
+    return response
+
+
+def create_access_key_for_user():
+    """
+    Section 2: Number 23
+    :return:
+    """
+    response = create_user('testuser3')
+    username = response['User']['UserName']
+    iam = boto3.client('iam')
+    response = iam.create_access_key(UserName=username)
+    return response
+
+
+def update_access_key_of_user():
+    """
+    Section 2: Number 23
+    :return:
+    """
+    iam = boto3.client('iam')
+    username = 'testuser3'
+    response = iam.list_access_keys(UserName=username)
+    access_id = response['AccessKeyMetadata'][0]['AccessKeyId']
+    response = iam.update_access_key(UserName=username, AccessKeyId=access_id, Status='Inactive')
+    return response
+
+
+def create_user_login_profile():
+    """
+    Section 2: Number 24
+    :return:
+    """
+    username = 'testuser3'
+    iam = boto3.client('iam')
+    response = iam.create_login_profile(Password='MyPassworddd@1', PasswordResetRequired=False, UserName=username)
+    return response
