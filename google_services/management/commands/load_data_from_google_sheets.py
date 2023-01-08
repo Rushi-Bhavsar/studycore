@@ -8,7 +8,9 @@ from django.conf import settings
 from google_services.utils.google_api_wrapper import google_drive_service, google_sheets_service
 import pandas as pd
 from google_services.models import DailyAttendanceReport
-SHEETS_PRE_FIX_NAME = 'SEM_1'
+SHEETS_PRE_FIX_NAME = ['2022-23_sem-i_em', '2022-23_sem-i_chem_', '2022-23_sem-i_phy_',
+                       '2022-23_sem-i_bee_', '2022-23_sem-i_sme_', '2022-23_sem-i_bxe_',
+                       '2022-23_sem-i_pps_', '2022-23_sem-i_wks_']
 
 
 def get_session_details(value_range_0):
@@ -30,7 +32,7 @@ def create_payload(df):
                 'unit_no': row['unit_no'], 'topic_description': row['topic_description'],
                 'daily_attendance_percentage': row['daily_attendance_percentage'], 'roll_no': row['roll_no'],
                 'present_or_absent': row['present_or_absent'], 'roll_no_excused': row['roll_no_excused'],
-                'roll_no_late': row['roll_no_late'], 'record_entry_time': row['record_entry_time']}
+                'roll_no_late': row['roll_no_late'], 'record_entry_date': row['record_entry_date']}
         sheet_data.append(data)
     return sheet_data
 
@@ -41,14 +43,12 @@ def save_to_database(payload_data):
 
 
 def get_entry_on(date_time_string):
-    if len(date_time_string) == 16:
-        date_time_string += ':00'
+    entry_date = date_time_string.split(" ")[0]
     try:
-        entry_on_time = datetime.datetime.strptime(date_time_string, '%d/%m/%Y %H:%M:%S')
+        entry_on_time = datetime.datetime.strptime(entry_date, '%d/%m/%Y')
     except ValueError as v:
-        print("Day Month Swap Done")
-        entry_on_time = datetime.datetime.strptime(date_time_string, '%m/%d/%Y %H:%M:%S')
-
+        # print("Day-Month Swap Done")
+        entry_on_time = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
     # To avoid django native datetime warning, using timezone datetime.
     ist_time = pytz.timezone(settings.TIME_ZONE)
     entry_on_time = ist_time.localize(entry_on_time)
@@ -58,7 +58,7 @@ def get_entry_on(date_time_string):
 class Command(BaseCommand):
 
     def __init__(self):
-        self.sheet_ids = None
+        self.sheet_ids = []
         super().__init__()
 
     def handle(self, *args, **options):
@@ -72,22 +72,27 @@ class Command(BaseCommand):
     def get_sheets_id_from_drive(self):
         drive_api = google_drive_service()
         folder_type = 'application/vnd.google-apps.folder'
-        query_string = f"mimeType = '{folder_type}' and name = 'RKB' and trashed = false"
+        query_string = f"mimeType = '{folder_type}' and name = 'FE_22-23_S1' and trashed = false"
         driver_res = drive_api.files().list(q=query_string, fields='files(id, name)').execute()
         folder_ids = [item['id'] for item in driver_res['files']]
-        query = f"parents='{folder_ids[0]}' and name contains '{SHEETS_PRE_FIX_NAME}' and trashed = false"
-        folder_data = drive_api.files().list(q=query, fields='files(id, name)').execute()
-        self.sheet_ids = [item['id'] for item in folder_data['files']]
+        for prefix in SHEETS_PRE_FIX_NAME:
+            query = f"parents='{folder_ids[0]}' and name contains '{prefix}' and trashed = false"
+            folder_data = drive_api.files().list(q=query, fields='files(id, name)').execute()
+            # self.sheet_ids = [item['id'] for item in folder_data['files']]
+            self.sheet_ids.extend(list(map(lambda item: item['id'], folder_data['files'])))
         # self.stdout.write(f"Total Sheets under the folder: {len(self.sheet_ids)}")
 
     def get_sheets_data(self):
         for sheet_id in self.sheet_ids:
-            # self.stdout.write(f"Processing sheet: '{sheet_id}'.")
+            self.stdout.write(f"Processing sheet: '{sheet_id}'.")
             response = self.call_google_sheets_api_for_sheet(sheet_id)
             df = self.parse_google_sheets_data(response)
-            payload_data = create_payload(df)
-            save_to_database(payload_data)
+            if df.empty is False:
+                payload_data = create_payload(df)
+                save_to_database(payload_data)
             # self.stdout.write(f"Processing completed for sheet: '{sheet_id}'.")
+            else:
+                continue
 
     def call_google_sheets_api_for_sheet(self, sheet_id):
         range_sheet = ['Faculty!C2:C8', 'Report!B2:C', 'Report!E2:M', 'Report!P2:P']
@@ -101,11 +106,14 @@ class Command(BaseCommand):
         columns = ['subject_name', 'subject_short_name', 'subject_code', 'session_mode', 'class_room',
                    'attendance_date', 'faculty_initials', 'attendance_from_time', 'attendance_to_time', 'session_type',
                    'unit_no', 'topic_description', 'present_or_absent', 'roll_no', 'roll_no_excused', 'roll_no_late',
-                   'record_entry_time', 'daily_attendance_percentage']
+                   'record_entry_date', 'daily_attendance_percentage']
         value_range_0 = dict(valueRanges[0])
         value_range_1 = dict(valueRanges[1])
         value_range_2 = dict(valueRanges[2])
         value_range_3 = dict(valueRanges[3])
+        if ('values' not in value_range_1) or ('values' not in value_range_2) or ('values' not in value_range_3):
+            self.stdout.write(f"Data is missing in worksheets.")
+            return pd.DataFrame()
         session_data = get_session_details(value_range_0)
         sheet_row = []
         for index, value in enumerate(zip(value_range_1['values'], value_range_2['values'], value_range_3['values'])):

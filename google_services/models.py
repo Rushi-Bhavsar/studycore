@@ -19,7 +19,7 @@ class DailyAttendanceReport(models.Model):
     roll_no = models.CharField(max_length=200, blank=False, null=False)
     roll_no_excused = models.CharField(max_length=200, blank=True, null=True)
     roll_no_late = models.CharField(max_length=200, blank=True, null=True)
-    record_entry_time = models.DateTimeField(blank=False, null=False)
+    record_entry_date = models.DateField(blank=False, null=False)
     daily_attendance_percentage = models.PositiveSmallIntegerField(blank=False, null=False)
 
 
