@@ -1,3 +1,4 @@
 .idea
 secret_files
 db.sqlite3
+static
