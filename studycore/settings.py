@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'google_services.apps.GoogleServicesConfig',
     'aws_integration.apps.AwsIntegrationConfig',
     'gcp_integration.apps.GcpIntegrationConfig',
-    'slack_integration.apps.SlackIntegrationConfig'
+    'slack_integration.apps.SlackIntegrationConfig',
+    'user_cust_auth.apps.UserCustAuthConfig',
+    'rest_framework.apps.RestFrameworkConfig',
 ]
 
 MIDDLEWARE = [
