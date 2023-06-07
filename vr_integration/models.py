@@ -2,6 +2,11 @@ from django.db import models
 
 
 class StgVRFundPlan(models.Model):
+    created = models.DateTimeField(auto_created=True, blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True, blank=True, null=True)
+    is_active = models.BooleanField(default=False, blank=True, null=True)
+    modified_by = models.CharField(max_length=250, blank=True, null=True)
+    created_by = models.CharField(max_length=250, blank=True, null=True)
     plan_id = models.BigIntegerField(default=0, null=True, blank=True)
     amc_id = models.BigIntegerField(default=0, null=True, blank=True)
     short_name = models.CharField(max_length=100, null=True, blank=True)
@@ -67,6 +72,10 @@ class StgVRFundPlan(models.Model):
 
 
 class StgVrAMC(models.Model):
+    created = models.DateTimeField(auto_created=True, blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True, blank=True, null=True)
+    modified_by = models.CharField(max_length=250, blank=True, null=True)
+    created_by = models.CharField(max_length=250, blank=True, null=True)
     amc_id = models.IntegerField(blank=True, null=True)
     amc_full_name = models.CharField(max_length=250, blank=True, null=True)
     owner_type = models.CharField(max_length=50, blank=True, null=True)
