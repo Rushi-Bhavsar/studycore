@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'slack_integration.apps.SlackIntegrationConfig',
     'user_cust_auth.apps.UserCustAuthConfig',
     'rest_framework.apps.RestFrameworkConfig',
+    'vr_integration.apps.VrIntegrationConfig',
 ]
 
 MIDDLEWARE = [
